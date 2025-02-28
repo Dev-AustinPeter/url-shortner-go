@@ -1,0 +1,97 @@
+openapi: 3.0.2
+info:
+  title: URL Shortener API
+  description: A simple API to shorten URLs
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local server
+paths:
+  /shorten:
+    post:
+      summary: Shorten a URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                longUrl:
+                  type: string
+                  example: https://example.com
+      responses:
+        201:
+          description: Shortened URL created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  shortCode:
+                    type: string
+                    example: "abc123"
+    get:
+      summary: Create a new task to process all URLs in the database
+      responses:
+        201:
+          description: Task created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  taskId:
+                    type: string
+                    example: "task-123"
+  /shorten/{shortCode}:
+    get:
+      summary: Get original URL from shortened URL
+      parameters:
+        - in: path
+          name: shortCode
+          required: true
+          schema:
+            type: string
+            example: "abc123"
+      responses:
+        200:
+          description: Original URL retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  longUrl:
+                    type: string
+                    example: https://example.com
+    
+  /task/{taskId}:
+    get:
+      summary: Get the result of a task
+      parameters:
+        - in: path
+          name: taskId
+          required: true
+          schema:
+            type: string
+            example: "task-123"
+      responses:
+        200:
+          description: Task result retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        shortCode:
+                          type: string
+                          example: "abc123"
+                        longUrl:
+                          type: string
+                          example: https://example.com
