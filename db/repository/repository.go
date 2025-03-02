@@ -30,16 +30,16 @@ type UrlRepository interface {
 }
 
 type Repository struct {
-	*db.SqlHandler
+	DB db.Database
 }
 
-func NewRepository(con *db.SqlHandler) UrlRepository {
+func NewRepository(con db.Database) UrlRepository {
 	return &Repository{
-		SqlHandler: con,
+		DB: con,
 	}
 }
 
-func generateShortCode(n int) string {
+func GenerateShortCode(n int) string {
 	rand.Seed(time.Now().UnixNano())
 	b := make([]byte, n)
 	for i := range b {
@@ -49,22 +49,15 @@ func generateShortCode(n int) string {
 }
 
 func (r *Repository) CreateUrl(LongUrl string) (*string, error) {
-
 	url, err := r.GetLongUrl(LongUrl)
 	if err == nil && url.LongUrl.String == LongUrl {
 		return &url.ShortCode.String, nil
 	}
 
-	shortCode := generateShortCode(6)
-
-	stm, err := r.SqlHandler.Con.Prepare("INSERT INTO urls (short_code, long_url, created_at) VALUES ($1, $2, $3)")
-	if err != nil {
-		return nil, err
-	}
-	defer stm.Close()
+	shortCode := GenerateShortCode(6)
 
 	tn := time.Now().UTC()
-	_, err = stm.Exec(shortCode, LongUrl, tn)
+	_, err = r.DB.Exec("INSERT INTO urls (short_code, long_url, created_at) VALUES ($1, $2, $3)", shortCode, LongUrl, tn)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +66,7 @@ func (r *Repository) CreateUrl(LongUrl string) (*string, error) {
 
 func (r *Repository) GetUrl(shortCode string) (Url, error) {
 	var url Url
-	err := r.SqlHandler.Con.QueryRow("SELECT id, short_code, long_url, created_at FROM urls WHERE short_code = $1", shortCode).Scan(&url.ID, &url.ShortCode, &url.LongUrl, &url.CreatedAt)
+	err := r.DB.QueryRow("SELECT id, short_code, long_url, created_at FROM urls WHERE short_code = $1", shortCode).Scan(&url.ID, &url.ShortCode, &url.LongUrl, &url.CreatedAt)
 	if err != nil {
 		return Url{}, err
 	}
@@ -82,7 +75,8 @@ func (r *Repository) GetUrl(shortCode string) (Url, error) {
 
 func (r *Repository) GetLongUrl(longUrl string) (Url, error) {
 	var url Url
-	err := r.SqlHandler.Con.QueryRow("SELECT id, short_code, long_url, created_at FROM urls WHERE long_url = $1", longUrl).Scan(&url.ID, &url.ShortCode, &url.LongUrl, &url.CreatedAt)
+	err := r.DB.QueryRow("SELECT id, short_code, long_url, created_at FROM urls WHERE long_url = $1", longUrl).
+		Scan(&url.ID, &url.ShortCode, &url.LongUrl, &url.CreatedAt)
 	if err != nil {
 		return Url{}, err
 	}
@@ -91,7 +85,7 @@ func (r *Repository) GetLongUrl(longUrl string) (Url, error) {
 }
 
 func (r *Repository) GetAllUrls() ([]Url, error) {
-	rows, err := r.SqlHandler.Con.Query("SELECT id, short_code, long_url, created_at FROM urls")
+	rows, err := r.DB.Query("SELECT id, short_code, long_url, created_at FROM urls")
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +111,7 @@ func (r *Repository) GetAllUrls() ([]Url, error) {
 
 func (r *Repository) CreateTaskId() (*types.Task, error) {
 	taskId := uuid.Must(uuid.NewV4()).String()
-	stm, err := r.SqlHandler.Con.Prepare("INSERT INTO tasks (task_id, status, created_at) VALUES ($1, $2, $3)") // status is default to pending
+	stm, err := r.DB.Prepare("INSERT INTO tasks (task_id, status, created_at) VALUES ($1, $2, $3)") // status is default to pending
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +125,7 @@ func (r *Repository) CreateTaskId() (*types.Task, error) {
 }
 
 func (r *Repository) UpdateTask(taskId string, status string, result json.RawMessage) error {
-	stm, err := r.SqlHandler.Con.Prepare("UPDATE tasks SET status = $1, result = CASE WHEN $2::text = '' THEN NULL ELSE $2::jsonb END WHERE task_id = $3")
+	stm, err := r.DB.Prepare("UPDATE tasks SET status = $1, result = CASE WHEN $2::text = '' THEN NULL ELSE $2::jsonb END WHERE task_id = $3")
 	if err != nil {
 		return err
 	}
@@ -145,7 +139,7 @@ func (r *Repository) UpdateTask(taskId string, status string, result json.RawMes
 
 func (r *Repository) GetTask(taskId string) (types.Task, error) {
 	var task types.Task
-	err := r.SqlHandler.Con.QueryRow("SELECT task_id, status, result, created_at FROM tasks WHERE task_id = $1", taskId).Scan(&task.TaskID, &task.Status, &task.Result, &task.CreatedAt)
+	err := r.DB.QueryRow("SELECT task_id, status, result, created_at FROM tasks WHERE task_id = $1", taskId).Scan(&task.TaskID, &task.Status, &task.Result, &task.CreatedAt)
 	if err != nil {
 		return types.Task{}, err
 	}

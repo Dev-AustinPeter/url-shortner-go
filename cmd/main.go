@@ -65,9 +65,9 @@ func (s *APIServer) Run() error {
 		return fmt.Errorf("%s", "failed to connect to database")
 	}
 
-	defer db.Close()
+	defer db.DB.Close()
 
-	if err := db.Ping(); err != nil {
+	if err := db.DB.Ping(); err != nil {
 		fmt.Println("failed to connect to database")
 		logger.Error().Msg("failed to connect to database")
 		return err

@@ -8,7 +8,16 @@ import (
 )
 
 type SqlHandler struct {
-	Con *sql.DB
+	*sql.DB
+}
+
+type Database interface {
+	Prepare(query string) (*sql.Stmt, error)
+	QueryRow(query string, args ...interface{}) *sql.Row
+	Query(query string, args ...interface{}) (*sql.Rows, error)
+	Exec(query string, args ...interface{}) (sql.Result, error)
+	Close() error
+	Ping() error
 }
 
 func NewConnection(hostname string, port string, username string, password string, dbname string, driver string) *SqlHandler {
@@ -19,13 +28,33 @@ func NewConnection(hostname string, port string, username string, password strin
 	if err != nil {
 		return nil
 	}
-	return &SqlHandler{Con: db}
+	return &SqlHandler{DB: db}
+}
+
+// func (s *SqlHandler) Close() error {
+// 	return s.Con.Close()
+// }
+
+// func (s *SqlHandler) Ping() error {
+// 	return s.Con.Ping()
+// }
+
+func (s *SqlHandler) QueryRow(query string, args ...interface{}) *sql.Row {
+	return s.DB.QueryRow(query, args...)
+}
+
+func (s *SqlHandler) Query(query string, args ...interface{}) (*sql.Rows, error) {
+	return s.DB.Query(query, args...)
+}
+
+func (s *SqlHandler) Exec(query string, args ...interface{}) (sql.Result, error) {
+	return s.DB.Exec(query, args...)
 }
 
 func (s *SqlHandler) Close() error {
-	return s.Con.Close()
+	return s.DB.Close()
 }
 
 func (s *SqlHandler) Ping() error {
-	return s.Con.Ping()
+	return s.DB.Ping()
 }
