@@ -33,12 +33,12 @@ func NewHandler(repository repository.UrlRepository, logger *zerolog.Logger, cac
 func (h *Handler) RegisterRoutes(r *mux.Router, middleware *middleware.RateLimiter) {
 
 	r.Handle("/shorten", middleware.Limit(http.HandlerFunc(h.Shorten))).Methods("POST")
-	r.Handle("/shorten/{shortUrl}", middleware.Limit(http.HandlerFunc(h.getShorten))).Methods("GET")
-	r.Handle("/shorten", middleware.Limit(http.HandlerFunc(h.createTaskId))).Methods("GET")
+	r.Handle("/shorten/{shortUrl}", middleware.Limit(http.HandlerFunc(h.GetShorten))).Methods("GET")
+	r.Handle("/shorten", middleware.Limit(http.HandlerFunc(h.CreateTaskId))).Methods("GET")
 	r.Handle("/task/{taskId}", middleware.Limit(http.HandlerFunc(h.GetTaskBaseOnTaskId))).Methods("GET")
 }
 
-// shorten handles POST requests to /shorten. It takes a JSON payload with a
+// Shorten handles POST requests to /shorten. It takes a JSON payload with a
 // "longUrl" field and returns a JSON response with a "shortCode" field.
 // If the payload is invalid, it returns a 400 error. If the URL cannot be
 // shortened, it returns a 500 error. Otherwise, it returns a 201 Created
@@ -71,9 +71,9 @@ func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// getShorten handles GET requests to /shorten/{shortUrl}. It attempts to fetch the URL from the database.
+// GetShorten handles GET requests to /shorten/{shortUrl}. It attempts to fetch the URL from the database.
 // If the URL is not found, it returns a 404 error. Otherwise, it returns the URL in the response body.
-func (h *Handler) getShorten(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetShorten(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	shortUrl := vars["shortUrl"]
 
@@ -95,10 +95,10 @@ func (h *Handler) getShorten(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// createTaskId handles GET requests to /task. It creates a new task in the database and starts it in a separate goroutine.
+// CreateTaskId handles GET requests to /task. It creates a new task in the database and starts it in a separate goroutine.
 // The task is responsible for processing all URLs in the database and storing the result in the task's result field.
 // If the task creation fails, it returns a 500 error. Otherwise, it returns the created task in the response body.
-func (h *Handler) createTaskId(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) CreateTaskId(w http.ResponseWriter, r *http.Request) {
 	task, err := h.UrlRepository.CreateTaskId()
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
