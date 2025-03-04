@@ -32,10 +32,10 @@ func NewHandler(repository repository.UrlRepository, logger *zerolog.Logger, cac
 
 func (h *Handler) RegisterRoutes(r *mux.Router, middleware *middleware.RateLimiter) {
 
-	r.Handle("/shorten", middleware.Limit(http.HandlerFunc(h.shorten))).Methods("POST")
+	r.Handle("/shorten", middleware.Limit(http.HandlerFunc(h.Shorten))).Methods("POST")
 	r.Handle("/shorten/{shortUrl}", middleware.Limit(http.HandlerFunc(h.getShorten))).Methods("GET")
 	r.Handle("/shorten", middleware.Limit(http.HandlerFunc(h.createTaskId))).Methods("GET")
-	r.Handle("/task/{taskId}", middleware.Limit(http.HandlerFunc(h.getTaskBaseOnTaskId))).Methods("GET")
+	r.Handle("/task/{taskId}", middleware.Limit(http.HandlerFunc(h.GetTaskBaseOnTaskId))).Methods("GET")
 }
 
 // shorten handles POST requests to /shorten. It takes a JSON payload with a
@@ -43,7 +43,7 @@ func (h *Handler) RegisterRoutes(r *mux.Router, middleware *middleware.RateLimit
 // If the payload is invalid, it returns a 400 error. If the URL cannot be
 // shortened, it returns a 500 error. Otherwise, it returns a 201 Created
 // status with the shortened URL in the response body.
-func (h *Handler) shorten(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Shorten(w http.ResponseWriter, r *http.Request) {
 	var payload struct {
 		LongUrl string `json:"longUrl"`
 	}
@@ -118,10 +118,10 @@ func (h *Handler) createTaskId(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// getTaskBaseOnTaskId handles GET requests to /task/{taskId}. It attempts to fetch the task from the cache first. If the cache
+// GetTaskBaseOnTaskId handles GET requests to /task/{taskId}. It attempts to fetch the task from the cache first. If the cache
 // is a miss, it fetches the task from the database and stores it in the cache for future requests. If the task is not found in
 // the database, it returns a 404 error.
-func (h *Handler) getTaskBaseOnTaskId(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetTaskBaseOnTaskId(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	taskId := vars["taskId"]
 

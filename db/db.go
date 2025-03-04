@@ -30,31 +30,3 @@ func NewConnection(hostname string, port string, username string, password strin
 	}
 	return &SqlHandler{DB: db}
 }
-
-// func (s *SqlHandler) Close() error {
-// 	return s.Con.Close()
-// }
-
-// func (s *SqlHandler) Ping() error {
-// 	return s.Con.Ping()
-// }
-
-func (s *SqlHandler) QueryRow(query string, args ...interface{}) *sql.Row {
-	return s.DB.QueryRow(query, args...)
-}
-
-func (s *SqlHandler) Query(query string, args ...interface{}) (*sql.Rows, error) {
-	return s.DB.Query(query, args...)
-}
-
-func (s *SqlHandler) Exec(query string, args ...interface{}) (sql.Result, error) {
-	return s.DB.Exec(query, args...)
-}
-
-func (s *SqlHandler) Close() error {
-	return s.DB.Close()
-}
-
-func (s *SqlHandler) Ping() error {
-	return s.DB.Ping()
-}
